@@ -1,3 +1,7 @@
+import csv
+rows=[]
+trainVec=[0,0,0,0,0,0]
+
 def parseDate(s):
     l=s.split('-')
     adict={}
@@ -47,6 +51,7 @@ def norm(l):
     list1.append(M)
     list1.append(m)
     return list1
+
 def norm1(l):
     sum1=[]
     for i in range(0,len(l[0])):
@@ -58,10 +63,12 @@ def norm1(l):
     for i in range(0,len(l[0])):
         for j in range(0,len(l)):
             l[j][i]-=sum1[i]
+            
 def denorm(l1,index,val):
     Mi=l1[0][index]
     mi=l1[1][index]
     return val*(Mi-mi)+mi
+
 def train(alpha):
     corr=[0,0,0,0,0,0]
     for i in range(0,len(rows)-1):
@@ -76,35 +83,41 @@ def train(alpha):
     for i in range(0,len(corr)):
         trainVec[i]+=2*alpha*corr[i]
 
-import csv
-rows=[]
+def update(s):
+    with open("ENTER VALID FILE-PATH", 'r', newline='') as csvfile:
+        rd=csv.reader(csvfile,delimiter=",")
+        for row in rd:
+            if row[0]=='date':
+                continue
+            if row[1]==s:
+                data=[float(row[2]),float(row[3]),float(row[4]),float(row[5]),float(row[6])]
+                rows.append(data)
+    return norm(rows)
 
-with open("ADD FILEPATH", 'r', newline='') as csvfile:
-    rd=csv.reader(csvfile,delimiter=",")
-    for row in rd:
-        if row[0]=='date':
-            continue
-        if row[1]=='AAPL':
-            data=[float(row[2]),float(row[3]),float(row[4]),float(row[5]),float(row[6])]
-            rows.append(data)
-list1=norm(rows)
-trainVec=[0,0,0,0,0,0]
-def test():
+
+def test(list1):
     loss=0
     for i in range(0,len(rows)-1):
         data=rows[i].copy()
         data.insert(0,1.0)
         pred=dotProd(trainVec,data)
-        print(denorm(list1,1,rows[i+1][1]),denorm(list1,1,pred))
+        #print(denorm(list1,1,rows[i+1][1]),denorm(list1,1,pred))
         loss+=calcLoss(denorm(list1,1,rows[i+1][1]),denorm(list1,1,pred))
     loss/=(len(rows)-1)
     print(loss)    
 def main():
-    for epoch in range(1,21):
-        alpha=0.1/epoch
-        for i in range(0,100):
-            train(alpha)
-    test()
+    list1=[]
+    for s in ["AAPL","WLTW,SYMC,SRE"]:
+        list1.clear()
+        list1=update(s)
+        for epoch in range(1,21):
+            alpha=0.5/epoch
+            for i in range(0,100):
+                train(alpha)
+    for s in ["EMN"]:
+        list1.clear()
+        list1=update(s)
+        test(list1)
         
 main()         
 print(trainVec)
